@@ -20,6 +20,7 @@ __all__ = (
     "MvNormalCholesky",
     "VonMisesFisher",
     "Wishart",
+    "MvStudentT",
 )
 
 
@@ -373,3 +374,45 @@ class MvNormalCholesky(ContinuousDistribution):
     def _init_distribution(conditions, **kwargs):
         loc, scale_tril = conditions["loc"], conditions["scale_tril"]
         return tfd.MultivariateNormalTriL(loc=loc, scale_tril=scale_tril, **kwargs)
+
+
+class MvStudentT(ContinuousDistribution):
+    r"""
+    Multivariate Student's t-distribution
+
+    .. math::
+
+        f(x) =
+            \frac{(1 + ||y||^{2} / \nu)^{-0.5 (\nu + k)}}
+            {Z}, \\
+        y = \Sigma^{-1} (x - \mu),\\
+        Z = \frac{|\det(\Sigma)| \sqrt(\nu \pi)^{k}} \Gamma(0.5 \nu)} {\Gamma(0.5 \nu)+k}
+
+
+    ========  ==========================
+    Support   :math:`x \in \mathbb{R}^k`
+    Mean      :math:`\mu` if :math:`\nu>1`
+    Variance  :math:`\frac{\nu}{\nu-2}\Sigma` if :math:`\nu > 2`
+    ========  ==========================
+
+
+    Parameters
+    ----------
+    df : positive scalar
+        The degrees of freedom :math:`\nu.`
+    loc : array_like
+        Vector of means :math:`\mu.`
+    scale : 
+        Lower triangular matrix, such that scale @ scale.T is positive
+        semi-definite :math:`\Sigma.`
+
+
+    """
+
+    def __init__(self, name, df, loc, scale, **kwargs):
+        super().__init__(name, df=df, loc=loc, scale=scale, **kwargs)
+
+    @staticmethod
+    def _init_distribution(conditions, **kwargs):
+        df, loc, scale = conditions["df"], conditions["loc"], conditions["scale"]
+        return tfd.MultivariateStudentTLinearOperator(df=df, loc=loc, scale=scale, **kwargs)
